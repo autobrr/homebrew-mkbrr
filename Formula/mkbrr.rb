@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-# mkbrr is a tool for creating autobrr filters
+# mkbrr is a tool for creating, modifying and inspecting torrent files
 class Mkbrr < Formula
-    desc "Command-line tool for creating autobrr filters"
+    desc "Command-line tool for creating, modifying and inspecting torrent files"
     homepage "https://github.com/autobrr/mkbrr"
     url "https://github.com/autobrr/mkbrr/archive/refs/tags/v1.1.0.tar.gz"
     sha256 "bd547f62cf0fa457c08a3eef176418e477eb1f73bdff017c0b98a91e536564d1"
