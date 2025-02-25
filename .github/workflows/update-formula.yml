@@ -47,12 +47,12 @@ jobs:
         if: steps.update.outputs.updated == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
-          commit-message: "chore(deps): update mkbrr to ${{ steps.latest_release.outputs.version }}"
-          title: "chore(deps): update mkbrr to ${{ steps.latest_release.outputs.version }}"
+          commit-message: "mkbrr ${{ steps.latest_release.outputs.version }}"
+          title: "mkbrr ${{ steps.latest_release.outputs.version }}"
           body: |
             Updates mkbrr to ${{ steps.latest_release.outputs.version }}
             
             This PR was created automatically by the update-formula workflow.
           branch: update-mkbrr
           delete-branch: true
-          labels: dependencies 
+          labels: bump-formula-pr,go 
