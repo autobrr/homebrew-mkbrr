@@ -4,8 +4,8 @@
 class Mkbrr < Formula
     desc "Command-line tool for creating, modifying and inspecting torrent files"
     homepage "https://github.com/autobrr/mkbrr"
-    url "https://github.com/autobrr/mkbrr/archive/refs/tags/v1.1.0.tar.gz"
-    sha256 "bd547f62cf0fa457c08a3eef176418e477eb1f73bdff017c0b98a91e536564d1"
+    url "https://github.com/autobrr/mkbrr/archive/refs/tags/v1.2.0.tar.gz"
+    sha256 "72d74a75335d1715e4c38e3272f3d5dbd42f86de6f9b2ebde94dbf19ed61b19e"
     license "GPL-2.0-or-later"
   
     depends_on "go" => :build
