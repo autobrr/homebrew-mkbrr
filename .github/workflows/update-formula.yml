@@ -11,8 +11,15 @@ jobs:
   update-formula:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout homebrew tap
         uses: actions/checkout@v4
+
+      - name: Checkout mkbrr repo
+        uses: actions/checkout@v4
+        with:
+          repository: autobrr/mkbrr
+          path: mkbrr
+          fetch-depth: 0
 
       - name: Configure Git
         run: |
@@ -21,8 +28,9 @@ jobs:
 
       - name: Get latest release
         id: latest_release
+        working-directory: mkbrr
         run: |
-          latest_version=$(curl -s https://api.github.com/repos/autobrr/mkbrr/releases/latest | jq -r .tag_name)
+          latest_version=$(git describe --tags --abbrev=0)
           echo "version=${latest_version}" >> $GITHUB_OUTPUT
           
           download_url="https://github.com/autobrr/mkbrr/archive/refs/tags/${latest_version}.tar.gz"
@@ -33,6 +41,7 @@ jobs:
 
       - name: Update Formula
         id: update
+        working-directory: ${{ github.workspace }}
         run: |
           current_version=$(grep -m 1 'version=v' Formula/mkbrr.rb | cut -d'"' -f2)
           if [ "v$current_version" != "${{ steps.latest_release.outputs.version }}" ]; then
