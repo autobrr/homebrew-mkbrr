@@ -23,47 +23,21 @@ jobs:
         id: latest_release
         run: |
           latest_version=$(curl -s https://api.github.com/repos/autobrr/mkbrr/releases/latest | jq -r .tag_name)
-          
-          # Validate the fetched version
-          if [ -z "$latest_version" ] || [ "$latest_version" == "null" ]; then
-            echo "Error: Failed to fetch latest release version or no latest release found."
-            exit 1
-          fi
-          
-          # Check if version matches expected format (e.g., v1.2.3)
-          if ! [[ "$latest_version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Error: Fetched version '$latest_version' does not match expected format vX.Y.Z."
-            exit 1
-          fi
-          
           echo "version=${latest_version}" >> $GITHUB_OUTPUT
           
           download_url="https://github.com/autobrr/mkbrr/archive/refs/tags/${latest_version}.tar.gz"
           echo "download_url=${download_url}" >> $GITHUB_OUTPUT
           
-          # Validate download before calculating sha256
-          if ! curl --output /dev/null --silent --head --fail "$download_url"; then
-            echo "Error: Download URL '$download_url' is not accessible."
-            exit 1
-          fi
           sha256=$(curl -sL "${download_url}" | sha256sum | cut -d ' ' -f 1)
           echo "sha256=${sha256}" >> $GITHUB_OUTPUT
-          
-          # Also output version without 'v' prefix for easier comparison
-          echo "version_no_v=${latest_version#v}" >> $GITHUB_OUTPUT
 
       - name: Update Formula
         id: update
         run: |
-          # Extract current version from formula (remove leading 'v')
-          current_version_in_formula=$(grep -m 1 'url "https://github.com/autobrr/mkbrr/archive/refs/tags/v' Formula/mkbrr.rb | sed -n 's/.*\/v\([^"]*\)\.tar\.gz".*/\1/p')
-          
-          # Compare versions (without leading 'v')
-          if [ "$current_version_in_formula" != "${{ steps.latest_release.outputs.version_no_v }}" ]; then
-            echo "Updating formula from v${current_version_in_formula} to ${{ steps.latest_release.outputs.version }}"
-            # Use precise sed patterns to avoid accidental replacements
-            sed -i "s|url \".*archive/refs/tags/v.*\.tar\.gz\"|url \"${{ steps.latest_release.outputs.download_url }}\"|" Formula/mkbrr.rb
-            sed -i "s|sha256 \".*\"|sha256 \"${{ steps.latest_release.outputs.sha256 }}\"|" Formula/mkbrr.rb
+          current_version=$(grep -m 1 'version=v' Formula/mkbrr.rb | cut -d'"' -f2)
+          if [ "v$current_version" != "${{ steps.latest_release.outputs.version }}" ]; then
+            sed -i "s|url.*|url \"${{ steps.latest_release.outputs.download_url }}\"|" Formula/mkbrr.rb
+            sed -i "s|sha256.*|sha256 \"${{ steps.latest_release.outputs.sha256 }}\"|" Formula/mkbrr.rb
             echo "updated=true" >> $GITHUB_OUTPUT
           else
             echo "updated=false" >> $GITHUB_OUTPUT
@@ -81,4 +55,4 @@ jobs:
             This PR was created automatically by the update-formula workflow.
           branch: update-mkbrr
           delete-branch: true
-          labels: bump-formula-pr,go
+          labels: bump-formula-pr,go 
