@@ -21,8 +21,18 @@ jobs:
 
       - name: Get latest release
         id: latest_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          latest_version=$(curl -s https://api.github.com/repos/autobrr/mkbrr/releases/latest | jq -r .tag_name)
+          # Use GitHub API with authentication to avoid rate limits
+          latest_release=$(gh api repos/autobrr/mkbrr/releases/latest)
+          
+          # Extract version and validate it's not empty
+          latest_version=$(echo "$latest_release" | jq -r .tag_name)
+          if [ -z "$latest_version" ] || [ "$latest_version" = "null" ]; then
+            echo "Error: Failed to get latest version"
+            exit 1
+          fi
           echo "version=${latest_version}" >> $GITHUB_OUTPUT
           
           download_url="https://github.com/autobrr/mkbrr/archive/refs/tags/${latest_version}.tar.gz"
@@ -34,12 +44,18 @@ jobs:
       - name: Update Formula
         id: update
         run: |
-          current_version=$(grep -m 1 'version=v' Formula/mkbrr.rb | cut -d'"' -f2)
-          if [ "v$current_version" != "${{ steps.latest_release.outputs.version }}" ]; then
+          # Extract current version from the URL in the formula
+          current_url=$(grep -m 1 'url "' Formula/mkbrr.rb | sed 's/.*url "\(.*\)"/\1/')
+          current_version=$(echo "$current_url" | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+          
+          # Compare versions
+          if [ "$current_version" != "${{ steps.latest_release.outputs.version }}" ]; then
+            echo "Updating from $current_version to ${{ steps.latest_release.outputs.version }}"
             sed -i "s|url.*|url \"${{ steps.latest_release.outputs.download_url }}\"|" Formula/mkbrr.rb
             sed -i "s|sha256.*|sha256 \"${{ steps.latest_release.outputs.sha256 }}\"|" Formula/mkbrr.rb
             echo "updated=true" >> $GITHUB_OUTPUT
           else
+            echo "Formula is already up to date with version $current_version"
             echo "updated=false" >> $GITHUB_OUTPUT
           fi
 
